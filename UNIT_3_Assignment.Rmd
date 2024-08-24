@@ -1,0 +1,263 @@
+---
+output:
+  
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+        
+  pdf_document:
+    
+    fig_caption: true
+    fig_crop: false
+  word_document: default
+params:
+    printcode: false
+---
+
+---
+title: "Unit_assignment_3"
+author: "lalitha"
+date: "2024-08-24"
+output: html_document
+---
+
+
+
+```{r}
+library(ISLR)
+library(MASS)
+library(class)
+```
+
+
+```{r}
+auto=Auto
+```
+11)
+
+# In this problem, you will develop a model to predict whether a given car gets high or low gas mileage based on the Auto data set.
+
+## (a) Create a binary variable, mpg01, that contains a 1 if mpg contains a value above its median, and a 0 if mpg contains a value below its median. You can compute the median using the median() function. Note you may find it helpful to use the data.frame() function to create a single data set containing both mpg01 and the other Auto variables.
+```{r}
+med=median(auto$mpg)
+```
+
+
+```{r}
+mpg01=ifelse(auto$mpg>med,1,0)
+mpg01
+auto_1=data.frame(auto,mpg01)
+
+```
+
+
+```{r}
+auto_1
+```
+
+##  (b) Explore the data graphically in order to investigate the association between mpg01 and the other features. Which of the other features seem most likely to be useful in predicting mpg01? Scatterplots and boxplots may be useful tools to answer this question. Describe your findings. 
+```{r}
+cor(auto_1[,-9])
+```
+
+
+```{r}
+plot(auto_1)
+```
+
+```{r}
+par(mfrow=c(3,3))
+boxplot(mpg~mpg01,data = auto_1)
+boxplot(cylinders~mpg01,data = auto_1)
+boxplot(displacement~mpg01,data = auto_1)
+boxplot(horsepower~mpg01,data = auto_1)
+boxplot(weight~mpg01,data = auto_1)
+boxplot(acceleration~mpg01,data = auto_1)
+boxplot(year~mpg01,data = auto_1)
+boxplot(origin~mpg01,data = auto_1)
+```
+weight ,displacement,horsepower,mpg,cylinders are can used for predicting mpg01.
+weight,displcement,horsepower and cylinders with mpg01 having strong negative relationship
+
+## (c)	 Split the data into a training set and a test set.
+
+```{r}
+set.seed(1)
+tr_auto=sample(nrow(auto_1),nrow(auto_1)*0.70)
+tr_auto
+```
+
+```{r}
+train_auto=auto_1[tr_auto,]
+train_auto
+```
+
+
+```{r}
+test_auto=auto_1[-tr_auto,]
+test_auto
+```
+
+
+## (d)	Perform LDA on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained? 
+
+```{r}
+auto_fit_d=lda(mpg01~cylinders+displacement+horsepower+weight,data=train_auto)
+auto_fit_d
+```
+
+```{r}
+pred_auto=predict(auto_fit_d,test_auto[,-10])
+pred_auto
+```
+
+
+```{r}
+table(test_auto$mpg01,pred_auto$class)
+```
+
+```{r}
+(50+54)/118 # accuracy
+(11+1)/118 # test error
+```
+## (e)	Perform QDA on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained? 
+
+```{r}
+qda_auto_e=qda(mpg01~cylinders+displacement+horsepower+weight,data=train_auto)
+qda_auto_e
+
+```
+
+
+```{r}
+pred_auto_qda=predict(qda_auto_e,test_auto[,-10])
+pred_auto_qda
+```
+
+
+```{r}
+table(test_auto$mpg01,pred_auto_qda$class)
+```
+
+```{r}
+(52+52)/118 # acuuracy
+(9+1)/118 # test error
+```
+
+## (f)	Perform logistic regression on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained?
+
+```{r}
+auto_logistic_f=glm(mpg01~cylinders+displacement+horsepower+weight,data=train_auto,family = binomial)
+auto_logistic_f
+```
+
+
+```{r}
+pred_auto_f=predict(auto_logistic_f,test_auto[,-10])
+pred_auto_f
+```
+
+
+```{r}
+pred_auto_f_result=rep(0,nrow(test_auto))
+pred_auto_f_result
+```
+
+
+```{r}
+pred_auto_f_result[pred_auto_f>0.5]=1
+pred_auto_f_result
+```
+
+
+```{r}
+table(test_auto$mpg01,pred_auto_f_result)
+```
+
+
+```{r}
+(55+51)/118 # accuracy
+(6+6)/118 # test error
+```
+## (g)	Perform KNN on the training data, with several values of K, in order to predict mpg01. Use only the variables that seemed most associated with mpg01 in (b). What test errors do you obtain? Which value of K seems to perform the best on this data set?
+
+```{r}
+tr_auto_x=auto_1[tr_auto,2:5]
+tr_auto_x
+```
+
+
+```{r}
+test_auto
+
+```
+
+
+```{r}
+test_auto_x=auto_1[-tr_auto,2:5]
+test_auto_x
+```
+
+
+```{r}
+test_auto_y=auto_1$mpg01[-tr_auto]
+test_auto_y
+```
+
+
+```{r}
+tr_auto_y=auto_1$mpg01[tr_auto]
+tr_auto_y
+```
+
+
+```{r}
+set.seed(1)
+knn_auto_1=knn(tr_auto_x,test_auto_x,tr_auto_y,k=1)
+table(knn_auto_1,test_auto_y)
+```
+
+```{r}
+(51+51)/118 #accuracy
+(6+10)/118 #test error
+```
+
+```{r}
+set.seed(1)
+knn_auto_1=knn(tr_auto_x,test_auto_x,tr_auto_y,k=2)
+table(knn_auto_1,test_auto_y)
+```
+
+
+```{r}
+(52+52)/118 #accuracy
+(5+9)/118 #test error
+```
+
+
+```{r}
+set.seed(1)
+knn_auto_1=knn(tr_auto_x,test_auto_x,tr_auto_y,k=3)
+table(knn_auto_1,test_auto_y)
+```
+
+
+```{r}
+(52+53)/118 #accuracy
+(9+4)/118 # test error
+```
+
+
+```{r}
+set.seed(1)
+knn_auto_1=knn(tr_auto_x,test_auto_x,tr_auto_y,k=4)
+table(knn_auto_1,test_auto_y)
+```
+
+
+```{r}
+(52+51)/118 #accuracy
+(9+6) /118 #test error
+```
